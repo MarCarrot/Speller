@@ -1,0 +1,8 @@
+name: Speller
+version: ${project.version}
+main: me.marcarrots.speller.Speller
+api-version: 1.16
+authors: [ MarCarrot ]
+commands:
+  spell:
+    description: "Main command."
