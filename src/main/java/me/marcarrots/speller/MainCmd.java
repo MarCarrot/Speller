@@ -1,15 +1,14 @@
 package me.marcarrots.speller;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -46,21 +45,33 @@ public class MainCmd implements TabExecutor {
         }
     }
 
-    private void setBlock(int X, int Y, int Z, int offset, Direction direction, Material material, World world) {
+    private Task setBlock(int X, int Y, int Z, int offset, Direction direction, Material material, World world) {
+        Task task = new Task(world);
+        task.setMaterial(material);
+        Block block;
         switch (direction) {
             case NORTH:
-                world.getBlockAt(X, Y, Z - offset).setType(material);
+                block = world.getBlockAt(X, Y, Z - offset);
+                task.setLocation(X, Y, Z - offset);
                 break;
             case EAST:
-                world.getBlockAt(X + offset, Y, Z).setType(material);
+                block = world.getBlockAt(X + offset, Y, Z);
+                task.setLocation(X + offset, Y, Z);
                 break;
             case SOUTH:
-                world.getBlockAt(X, Y, Z + offset).setType(material);
+                block = world.getBlockAt(X, Y, Z + offset);
+                task.setLocation(X, Y, Z + offset);
                 break;
             case WEST:
-                world.getBlockAt(X - offset, Y, Z).setType(material);
+                block = world.getBlockAt(X - offset, Y, Z);
+                task.setLocation(X - offset, Y, Z);
                 break;
+            default:
+                throw new IllegalStateException("Unexpected value: " + direction);
         }
+        task.setMaterialOld(block.getType());
+        block.setType(material);
+        return task;
 
     }
 
@@ -77,7 +88,6 @@ public class MainCmd implements TabExecutor {
         int locY = loc.getBlockY();
         int locZ = loc.getBlockZ();
         Direction direction = getDirection(loc.getYaw());
-        player.sendMessage("Direction: " + direction);
 
         if (args.length == 0) {
             player.sendMessage("Need more args.");
@@ -95,90 +105,93 @@ public class MainCmd implements TabExecutor {
         }
 
         String argsString = String.join(" ", args).toUpperCase();
-        player.sendMessage(argsString);
+        player.sendMessage(String.format("%sPrinting: %s%s", ChatColor.YELLOW, ChatColor.GOLD, argsString));
+        ArrayList<Task> tasks = new ArrayList<>();
+
         for (int i = 0; i < argsString.length(); i++) {
             char letter = argsString.charAt(i);
             String pattern = null;
             try {
                 pattern = speller.getLetterMap().get(letter).getPattern();
             } catch (Exception e) {
-                e.printStackTrace();
                 player.sendMessage("Unsupported character: " + argsString.charAt(i));
                 return false;
             }
             int heightLocal = locY;
+
+
             for (int j = 0; j < pattern.length(); j++) {
                 switch (pattern.charAt(j)) {
                     case '0':
                         break;
                     case '1': // 001
-                        setBlock(locX, heightLocal, locZ, 3, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 3, direction, handItem.getType(), world));
                         break;
                     case '2': // 010
-                        setBlock(locX, heightLocal, locZ, 2, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 2, direction, handItem.getType(), world));
                         break;
                     case '3': // 011
-                        setBlock(locX, heightLocal, locZ, 3, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 2, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 3, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 2, direction, handItem.getType(), world));
                         break;
                     case '4': // 100
                     case '8': // 1000
-                        setBlock(locX, heightLocal, locZ, 1, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 1, direction, handItem.getType(), world));
                         break;
                     case '5': // 101
-                        setBlock(locX, heightLocal, locZ, 3, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 1, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 3, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 1, direction, handItem.getType(), world));
                         break;
                     case '6': // 110
-                        setBlock(locX, heightLocal, locZ, 2, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 1, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 2, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 1, direction, handItem.getType(), world));
                         break;
                     case '7': // 111
-                        setBlock(locX, heightLocal, locZ, 3, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 2, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 1, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 3, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 2, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 1, direction, handItem.getType(), world));
                         break;
                     case '9': // 1001
-                        setBlock(locX, heightLocal, locZ, 4, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 1, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 4, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 1, direction, handItem.getType(), world));
                         break;
                     case 'B': // 1011
-                        setBlock(locX, heightLocal, locZ, 4, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 3, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 1, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 4, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 3, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 1, direction, handItem.getType(), world));
                         break;
                     case 'D': // 1101
-                        setBlock(locX, heightLocal, locZ, 4, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 2, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 1, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 4, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 2, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 1, direction, handItem.getType(), world));
                         break;
                     case 'F': // 1111
-                        setBlock(locX, heightLocal, locZ, 4, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 3, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 2, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 1, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 4, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 3, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 2, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 1, direction, handItem.getType(), world));
                         break;
                     case 'H': // 10001
-                        setBlock(locX, heightLocal, locZ, 5, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 1, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 5, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 1, direction, handItem.getType(), world));
                         break;
                     case 'L': // 10101
-                        setBlock(locX, heightLocal, locZ, 5, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 3, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 1, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 5, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 3, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 1, direction, handItem.getType(), world));
                         break;
                     case 'R': // 11011
-                        setBlock(locX, heightLocal, locZ, 5, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 4, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 2, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 1, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 5, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 4, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 2, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 1, direction, handItem.getType(), world));
                         break;
                     case 'V': // 11111
-                        setBlock(locX, heightLocal, locZ, 5, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 4, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 3, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 2, direction, handItem.getData().getItemType(), world);
-                        setBlock(locX, heightLocal, locZ, 1, direction, handItem.getData().getItemType(), world);
+                        tasks.add(setBlock(locX, heightLocal, locZ, 5, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 4, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 3, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 2, direction, handItem.getType(), world));
+                        tasks.add(setBlock(locX, heightLocal, locZ, 1, direction, handItem.getType(), world));
                         break;
                     default:
                         Bukkit.getLogger().log(Level.SEVERE, "Error " + i);
@@ -187,6 +200,8 @@ public class MainCmd implements TabExecutor {
                 heightLocal += 1;
 
             }
+
+
             int offset;
 
             if ("MW".contains(Character.toString(letter))) {
@@ -213,6 +228,8 @@ public class MainCmd implements TabExecutor {
                     break;
             }
         }
+        speller.addUndo(tasks, player.getUniqueId());
+
         return false;
 
     }

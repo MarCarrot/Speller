@@ -3,16 +3,47 @@ package me.marcarrots.speller;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Stack;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public final class Speller extends JavaPlugin {
+
+
 
     public HashMap<Character, Letter> getLetterMap() {
         return letterMap;
     }
 
     private HashMap<Character, Letter> letterMap = new HashMap<>();
+
+    public Stack<ArrayList<Task> > getUndoStack(UUID uuid) {
+        return UndoStack.get(uuid);
+    }
+
+    public void addUndo(ArrayList<Task> material, UUID uuid) {
+        if (!UndoStack.containsKey(uuid)) {
+            UndoStack.put(uuid, new Stack<>());
+        }
+        UndoStack.get(uuid).push(material);
+    }
+
+    public Stack<ArrayList<Task> > getRedoStack(UUID uuid) {
+        return RedoStack.get(uuid);
+    }
+
+    public void addRedo(ArrayList<Task> material, UUID uuid) {
+        if (!RedoStack.containsKey(uuid)) {
+            RedoStack.put(uuid, new Stack<>());
+        }
+        RedoStack.get(uuid).push(material);
+    }
+
+
+    private HashMap<UUID, Stack<ArrayList<Task> >> UndoStack;
+    private HashMap<UUID, Stack<ArrayList<Task> >> RedoStack;
 
     private void registerLetters() {
         letterMap.put(' ', new Letter(' ', "00000"));
@@ -51,7 +82,12 @@ public final class Speller extends JavaPlugin {
     public void onEnable() {
         Bukkit.getLogger().log(Level.INFO, "Speller plugin starting...");
         registerLetters();
+        UndoStack = new HashMap<>();
+        RedoStack = new HashMap<>();
         getCommand("spell").setExecutor(new MainCmd(this));
+        getCommand("spell-undo").setExecutor(new Undo(this));
+        getCommand("spell-redo").setExecutor(new Redo(this));
+
     }
 
     @Override
