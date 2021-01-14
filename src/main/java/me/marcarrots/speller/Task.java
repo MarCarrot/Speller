@@ -39,6 +39,10 @@ public class Task {
         return materialOld;
     }
 
+    public Material getMaterialNew() {
+        return materialNew;
+    }
+
     private Material materialOld;
 
     public void setLocation(int X, int Y, int Z) {
@@ -47,7 +51,7 @@ public class Task {
         this.Z = Z;
     }
 
-    public void setMaterial(Material material) {
+    public void setMaterialNew(Material material) {
         this.materialNew = material;
     }
 

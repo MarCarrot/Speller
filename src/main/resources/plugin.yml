@@ -3,10 +3,16 @@ version: ${project.version}
 main: me.marcarrots.speller.Speller
 api-version: 1.16
 authors: [ MarCarrot ]
+permissions:
+  speller.admin:
+    description: "Full permission to use /spell, /spell-redo & /spell-undo."
 commands:
   spell:
     description: "Main command."
+    permission: "speller.admin"
   spell-undo:
     description: "Undo stuff."
+    permission: "speller.admin"
   spell-redo:
     description: "Redo stuff."
+    permission: "speller.admin"

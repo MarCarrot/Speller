@@ -1,7 +1,5 @@
 package me.marcarrots.speller;
 
-import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -29,12 +27,7 @@ public class Redo implements TabExecutor {
 
         if (!speller.getRedoStack(player.getUniqueId()).isEmpty()) {
             ArrayList<Task> task = speller.getRedoStack(player.getUniqueId()).pop();
-            for (Task t: task) {
-                Block block = t.getWorld().getBlockAt(t.getX(), t.getY(), t.getZ());
-                final Material materialOld = t.getMaterialOld();
-                t.setMaterialOld(block.getType());
-                block.setType(materialOld);
-            }
+            Speller.fillBlocks(task, false);
             speller.addUndo(task, player.getUniqueId());
             sender.sendMessage(String.format("Redid %d blocks.", task.size()));
 

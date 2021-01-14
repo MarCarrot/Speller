@@ -1,6 +1,8 @@
 package me.marcarrots.speller;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
@@ -73,9 +75,38 @@ public final class Speller extends JavaPlugin {
         letterMap.put('X', new Letter('X', "52255"));
         letterMap.put('Y', new Letter('Y', "22755"));
         letterMap.put('Z', new Letter('Z', "74217"));
+
         letterMap.put('.', new Letter('.', "20000"));
         letterMap.put('!', new Letter('!', "20222"));
         letterMap.put(':', new Letter(':', "02020"));
+        letterMap.put('^', new Letter('^', "00520"));
+        letterMap.put('*', new Letter('*', "05250"));
+        letterMap.put('(', new Letter('(', "24442"));
+        letterMap.put(')', new Letter(')', "21112"));
+        letterMap.put('_', new Letter('_', "70000"));
+        letterMap.put('-', new Letter('-', "00700"));
+
+
+        letterMap.put('1', new Letter('1', "72262"));
+        letterMap.put('2', new Letter('2', "74717"));
+        letterMap.put('3', new Letter('3', "71317"));
+        letterMap.put('4', new Letter('4', "11755"));
+        letterMap.put('5', new Letter('5', "71747"));
+        letterMap.put('6', new Letter('6', "75747"));
+        letterMap.put('7', new Letter('7', "11117"));
+        letterMap.put('8', new Letter('8', "75757"));
+        letterMap.put('9', new Letter('9', "11757"));
+        letterMap.put('0', new Letter('0', "75557"));
+
+    }
+
+    public static void fillBlocks(ArrayList<Task> tasks, boolean doNewMaterial) {
+        for (Task t: tasks) {
+            Block block = t.getWorld().getBlockAt(t.getX(), t.getY(), t.getZ());
+            final Material materialOld = doNewMaterial ? t.getMaterialNew() : t.getMaterialOld();
+            t.setMaterialOld(block.getType());
+            block.setType(materialOld);
+        }
     }
 
     @Override

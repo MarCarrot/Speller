@@ -8,6 +8,8 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -47,7 +49,6 @@ public class MainCmd implements TabExecutor {
 
     private Task setBlock(int X, int Y, int Z, int offset, Direction direction, Material material, World world) {
         Task task = new Task(world);
-        task.setMaterial(material);
         Block block;
         switch (direction) {
             case NORTH:
@@ -70,7 +71,7 @@ public class MainCmd implements TabExecutor {
                 throw new IllegalStateException("Unexpected value: " + direction);
         }
         task.setMaterialOld(block.getType());
-        block.setType(material);
+        task.setMaterialNew(material);
         return task;
 
     }
@@ -78,6 +79,10 @@ public class MainCmd implements TabExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+
+        if (! (sender instanceof Player)) {
+            return false;
+        }
 
         Player player = (Player) sender;
 
@@ -99,10 +104,12 @@ public class MainCmd implements TabExecutor {
             return false;
         }
 
-        if (handItem.getData() == null || !handItem.getData().getItemType().isBlock()) {
-            player.sendMessage("You must be holding a block to set as the material.");
+        if (handItem.getData() == null || !handItem.getData().getItemType().isBlock() || handItem.getData().getItemType() == Material.AIR) {
+            player.sendMessage("You must be holding a valid block in your hand to set as the material for text.");
             return false;
         }
+
+        Instant start = Instant.now();
 
         String argsString = String.join(" ", args).toUpperCase();
         player.sendMessage(String.format("%sPrinting: %s%s", ChatColor.YELLOW, ChatColor.GOLD, argsString));
@@ -228,6 +235,11 @@ public class MainCmd implements TabExecutor {
                     break;
             }
         }
+
+        Speller.fillBlocks(tasks, true);
+        Duration between = Duration.between(start, Instant.now());
+        Bukkit.getLogger().log(Level.INFO, String.format("[Speller] %s has spelled '%s' with %s at (%s: %d, %d, %d) (%.2f ms, %d blocks modified).", player.getName(), argsString, handItem.getType(), world.getName(), locX, locY, locZ, between.getNano()/(1e6), tasks.size()));
+
         speller.addUndo(tasks, player.getUniqueId());
 
         return false;
